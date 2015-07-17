@@ -36,6 +36,11 @@ module Spree
       jcb: /^(?:2131|1800|35\d{3})\d{11}$/
     }
 
+    def address_attributes=(attributes)
+      #handles immutability of Address
+      super(Address.copy_attributes(address, attributes))
+    end
+
     # Sets the expiry date on this credit card.
     #
     # @param expiry [String] the desired new expiry date in one of the

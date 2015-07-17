@@ -294,9 +294,9 @@ describe Spree::CheckoutController, :type => :controller do
         before do
           order.ship_address.tap do |address|
             # A different country which is not included in the list of shippable countries
-            address.country = FactoryGirl.create(:country, :name => "Australia")
-            address.state_name = 'Victoria'
-            address.save
+            australia = create(:country, name: "Australia")
+            # update_columns to get around readonly restriction when testing
+            address.update_columns(country_id: australia.id, state_name: 'Victoria')
           end
 
           payment_method = FactoryGirl.create(:simple_credit_card_payment_method)
