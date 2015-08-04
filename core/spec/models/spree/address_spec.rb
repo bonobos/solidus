@@ -161,7 +161,7 @@ describe Spree::Address, :type => :model do
     end
   end
 
-  context ".default" do
+  context ".build_default" do
     context "no user given" do
       let!(:default_country) { create(:country) }
 
@@ -171,31 +171,14 @@ describe Spree::Address, :type => :model do
         end
 
         it "sets up a new record with Spree::Config[:default_country_id]" do
-          expect(Spree::Address.default.country).to eq default_country
+          expect(Spree::Address.build_default.country).to eq default_country
         end
       end
 
       # Regression test for #1142
       it "uses the first available country if :default_country_id is set to an invalid value" do
         Spree::Config[:default_country_id] = "0"
-        expect(Spree::Address.default.country).to eq default_country
-      end
-    end
-
-    context "user given" do
-      let(:bill_address) { Spree::Address.new(phone: '123-456-7890') }
-      let(:user) { double("User", bill_address: bill_address) }
-
-      it "returns a copy of that user bill address" do
-        expect(described_class.default(user).phone).to eq '123-456-7890'
-      end
-
-      context 'has no address' do
-        let(:bill_address) { nil }
-
-        it "falls back to build default when user has no address" do
-          expect(described_class.default(user)).to eq described_class.build_default
-        end
+        expect(Spree::Address.build_default.country).to eq default_country
       end
     end
   end

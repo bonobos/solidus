@@ -17,14 +17,10 @@ module Spree
       end
 
       def ship_address
-        #ActiveSupport::Deprecation.warn("User.ship_address is deprecated. Use #default_address instead.", caller)
         default_address
       end
 
       def ship_address=(address)
-        #ActiveSupport::Deprecation.warn("User.ship_address= is deprecated. Use #save_in_address_book instead.", caller)
-        # Deprecating this is premature because tests all over use it to create a test User.
-        # #save_in_address_book doesn't play well with FactoryGirl
         # TODO default = true for now to preserve existing behavior until MyAccount UI created
         save_in_address_book(address, true)
       end
@@ -33,7 +29,7 @@ module Spree
       # this #{fieldname}_attributes= method works with fields_for in the views
       # even without declaring accepts_nested_attributes_for
       def ship_address_attributes=(attributes)
-        self.ship_address = Address.new(attributes)
+        self.ship_address = Address.new(Address.copy_attributes(ship_address, attributes))
       end
 
       def bill_address=(address)
@@ -55,6 +51,7 @@ module Spree
 
       # we should take address_attributes to be clearer it's not a db row we're talking about, but address field values
       def save_in_address_book(address, default = false)
+        return nil unless address
         user_address = find_user_address_by_address(address)
         return user_address.address if user_address && (!default || user_address.default == default)
 

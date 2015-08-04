@@ -42,6 +42,7 @@ describe Spree::LegacyUser, :type => :model do
     context "persists order address" do
       let(:bill_address) { create(:address) }
       let(:ship_address) { create(:address) }
+      let(:order) { create(:order, user: user, bill_address: bill_address, ship_address: ship_address) }
 
       it "doesn't create new addresses" do
         user.user_addresses.create(address: bill_address)

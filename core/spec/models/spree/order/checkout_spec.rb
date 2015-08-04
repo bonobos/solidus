@@ -369,9 +369,8 @@ describe Spree::Order, :type => :model do
       let(:default_credit_card) { create(:credit_card) }
 
       before do
-        @default_credit_card = FactoryGirl.create(:credit_card)
         user = Spree::LegacyUser.new(email: 'spree@example.org', bill_address: user_bill_address)
-        allow(user).to receive(:default_credit_card) { @default_credit_card }
+        allow(user).to receive(:default_credit_card) { default_credit_card }
         order.user = user
 
         allow(order).to receive_messages(payment_required?: true)
@@ -385,7 +384,7 @@ describe Spree::Order, :type => :model do
       it "assigns the user's default credit card" do
         expect(order.state).to eq 'payment'
         expect(order.payments.count).to eq 1
-        expect(order.payments.first.source).to eq @default_credit_card
+        expect(order.payments.first.source).to eq default_credit_card
       end
 
       context "order already has a billing address" do

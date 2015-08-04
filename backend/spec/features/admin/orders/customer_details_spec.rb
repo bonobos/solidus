@@ -13,7 +13,7 @@ describe "Customer Details", type: :feature, js: true do
   let!(:ship_address) { create(:address, country: country, state: state, first_name: "Rumpelstiltskin") }
   let!(:bill_address) { create(:address, country: country, state: state, first_name: "Rumpelstiltskin") }
 
-  let!(:user) { create(:user, :email => 'foobar@example.com', :ship_address => ship_address) }
+  let!(:user) { create(:user, :email => 'foobar@example.com', :ship_address => ship_address, :bill_address => bill_address) }
 
   context "brand new order" do
     # Regression test for #3335 & #5317

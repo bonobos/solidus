@@ -549,7 +549,7 @@ module Spree
     end
 
     def shipping_eq_billing_address?
-      (bill_address.empty? && ship_address.empty?) || bill_address.same_as?(ship_address)
+      (bill_address.empty? && ship_address.empty?) || bill_address == ship_address
     end
 
     def set_shipments_cost
