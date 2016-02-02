@@ -190,6 +190,16 @@ describe Spree::Variant, :type => :model do
         expect(variant.reload.default_price.amount).to eq(12.12)
       end
     end
+
+    context "when a default price has been deleted and a new one is created" do
+       it "does not display that price as default" do
+         expect(variant.default_price.amount).to eq(19.99)
+         variant.prices.first.delete
+         variant.prices << create(:price, :variant => variant, :currency => "USD", :amount => 12.12)
+         variant.reload
+         expect(variant.default_price.amount).to eq(12.12)
+       end
+     end
   end
 
   describe '.price_in' do
