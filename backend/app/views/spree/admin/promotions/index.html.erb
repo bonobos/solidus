@@ -99,6 +99,7 @@
             <% if can?(:destroy, promotion) %>
               <%= link_to_delete promotion, :no_text => true %>
             <% end %>
+            <%= link_to_with_icon 'copy', 'duplicate', duplicate_admin_promotion_path(promotion), {:no_text => true} %>
           </td>
         </tr>
       <% end %>
