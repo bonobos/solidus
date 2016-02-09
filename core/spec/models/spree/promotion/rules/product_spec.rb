@@ -140,4 +140,28 @@ describe Spree::Promotion::Rules::Product, :type => :model do
       end
     end
   end
+
+  describe "#duplicate" do
+    let(:duplicated) { rule.duplicate }
+
+    context "with products" do
+      let(:product1) { mock_model(Spree::Product)}
+      let(:product2) { mock_model(Spree::Product)}
+      before { rule.products = [product1, product2] }
+
+      it "creates duplicate" do
+        expect(duplicated.preferences).to eq(rule.preferences)
+        expect(duplicated.product_promotion_rules.length).to eq 2
+        expect(duplicated.product_promotion_rules.map(&:product_id)).to eq([product1.id, product2.id])
+        expect(duplicated.products).to eq rule.products
+      end
+    end
+
+    context "without products" do
+      it "creates duplicate" do
+        expect(duplicated.preferences).to eq(rule.preferences)
+        expect(duplicated.product_promotion_rules).to be_empty
+      end
+    end
+  end
 end

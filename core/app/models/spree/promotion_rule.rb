@@ -8,6 +8,8 @@ module Spree
     validates :promotion, presence: true
     validate :unique_per_promotion, on: :create
 
+    class_attribute :association_for_duplication
+
     def self.for(promotable)
       all.select { |rule| rule.applicable?(promotable) }
     end
@@ -18,6 +20,18 @@ module Spree
 
     def eligible?(promotable, options = {})
       raise NotImplementedError, "eligible? should be implemented in a sub-class of Spree::PromotionRule"
+    end
+
+    def duplicate
+      duplicated_rule = self.dup
+      duplicate_associations(duplicated_rule) if association_for_duplication
+      duplicated_rule
+    end
+
+    def duplicate_associations(duplicated_rule)
+      self.public_send(association_for_duplication).map do |association|
+        duplicated_rule.public_send(association_for_duplication) << association
+      end
     end
 
     # This states if a promotion can be applied to the specified line item

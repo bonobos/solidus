@@ -7,7 +7,7 @@ module Spree
 
     belongs_to :promotion_category
 
-    has_many :promotion_rules, autosave: true, dependent: :destroy
+    has_many :promotion_rules, autosave: true, dependent: :destroy, inverse_of: :promotion
     alias_method :rules, :promotion_rules
 
     has_many :promotion_actions, autosave: true, dependent: :destroy
@@ -210,6 +210,13 @@ module Spree
       end
     end
 
+    def duplicate
+      new_promotion = Spree::Promotion.new
+      new_promotion.promotion_rules = duplicate_rules
+      new_promotion.promotion_actions = duplicate_actions
+      new_promotion
+    end
+
     private
 
     def blacklisted?(promotable)
@@ -234,6 +241,18 @@ module Spree
       return unless apply_automatically
       errors.add(:apply_automatically, :disallowed_with_code) if codes.any?
       errors.add(:apply_automatically, :disallowed_with_path) if path.present?
+    end
+
+    def duplicate_rules
+      rules.map do |rule|
+        rule.duplicate.tap { |dupe| dupe.promotion_id = nil }
+      end
+    end
+
+    def duplicate_actions
+      actions.map do |action|
+        action.duplicate.tap { |dupe| dupe.promotion_id = nil }
+      end
     end
   end
 end

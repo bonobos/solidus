@@ -773,4 +773,42 @@ describe Spree::Promotion, :type => :model do
       expect(order.adjustment_total).to eq -10
     end
   end
+
+  describe '#duplicate' do
+    let(:promotion) { build(:promotion, code: "123") }
+
+    subject { promotion.duplicate }
+
+    it 'returns a new promotion' do
+      new_promo = subject
+      expect(new_promo).to_not eq promotion
+    end
+
+    context "with rules" do
+      let!(:promotion) { create(:promotion_with_item_total_rule, code: '123') }
+
+      it 'has valid duplicated rules' do
+        new_promo_rule = subject.rules.first
+        promo_rule = promotion.rules.first
+
+        expect(new_promo_rule.type).to eq promo_rule.type
+        expect(new_promo_rule.preferences).to eq promo_rule.preferences
+        expect(new_promo_rule).to be_valid
+      end
+    end
+
+    context "with actions" do
+      let!(:promotion) { create(:promotion_with_order_adjustment, code: '123') }
+
+      it 'has valid duplicated actions' do
+        new_promo_action = subject.actions.first
+        promo_action = promotion.actions.first
+
+        expect(new_promo_action.type).to eq promo_action.type
+        expect(new_promo_action.preferences).to eq promo_action.preferences
+        expect(new_promo_action).to be_valid
+      end
+    end
+  end
+
 end

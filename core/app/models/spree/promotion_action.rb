@@ -19,5 +19,11 @@ module Spree
     def perform(options = {})
       raise 'perform should be implemented in a sub-class of PromotionAction'
     end
+
+    def duplicate
+      duplicated_action = self.dup
+      duplicated_action.calculator = calculator.dup if respond_to?(:calculator)
+      duplicated_action
+    end
   end
 end

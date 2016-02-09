@@ -8,6 +8,8 @@ module Spree
                                         foreign_key: :promotion_rule_id
         has_many :users, through: :promotion_rule_users, class_name: Spree::UserClassHandle.new
 
+        self.association_for_duplication = "users"
+
         def applicable?(promotable)
           promotable.is_a?(Spree::Order)
         end
