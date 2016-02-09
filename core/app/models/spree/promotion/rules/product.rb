@@ -10,6 +10,8 @@ module Spree
                                            class_name: 'Spree::ProductPromotionRule'
         has_many :products, class_name: 'Spree::Product', through: :product_promotion_rules
 
+        self.association_for_duplication = "products"
+
         MATCH_POLICIES = %w(any all none)
         preference :match_policy, :string, default: MATCH_POLICIES.first
 
