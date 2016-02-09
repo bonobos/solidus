@@ -24,6 +24,10 @@ module Spree
         end
       end
 
+      def duplicate
+        @promotion = @promotion.duplicate
+      end
+
       private
 
         def load_bulk_code_information

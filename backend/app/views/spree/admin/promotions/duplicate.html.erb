@@ -1,0 +1,77 @@
+<% content_for :page_title do %>
+  <%= Spree.t(:duplicating_promotion) %>
+<% end %>
+
+<%= render 'spree/admin/shared/promotion_sub_menu' %>
+
+<% content_for :page_actions do %>
+  <li>
+    <%= button_link_to Spree.t(:back_to_promotions_list), admin_promotions_path, :icon => 'arrow-left' %>
+  </li>
+<% end %>
+
+<%= form_for @promotion, :url => admin_promotions_path, :method => :post do |f| %>
+  <fieldset class="no-border-top">
+    <%= render :partial => 'form', :locals => { :f => f } %>
+    <%= render :partial => 'spree/admin/shared/new_resource_links' %>
+  </fieldset>
+
+  <div id="duplicate-promotions-overlay">
+    <div id="promotion-filters" class="row">
+
+      <div id="rules_container" class="alpha eight columns">
+        <fieldset id="rule_fields" class ="alpha eight columns no-border-bottom no-border-top">
+          <fieldset>
+          <legend align="center"><%= Spree.t(:rules) %></legend>
+            <% if @promotion.rules.any? %>
+              <div class="field">
+                <%= label_tag :promotion_rule_type, Spree.t(:add_rule_of_type) %>
+                <%= select_tag('promotion_rule[type]', options_for_promotion_rule_types(@promotion), :class => 'select2 fullwidth') %>
+              </div>
+          </fieldset>
+          <fieldset class="no-border-top">
+            <div id="promotion-pilicy-select" class="align-center row">
+              <% Spree::Promotion::MATCH_POLICIES.each do |policy| %>
+                <div class="alpha four columns">
+                  <label><%= f.radio_button :match_policy, policy %> <%= Spree.t "promotion_form.match_policies.#{policy}" %></label>
+                </div>
+              <% end %>
+            </div>
+
+            <div id="rules" class="filter_list row">
+              <%= render :partial => 'promotion_rule', :collection => @promotion.rules, :locals => { disallow_destroy: true} %>
+            <% else %>
+              <div class="no-objects-found">
+                <%= Spree.t(:no_rules_added) %>
+              </div>
+            <% end %>
+            </div>
+          </fieldset>
+      </div>
+
+      <div id="actions_container" class="omega eight columns">
+        <fieldset id="action_fields" class="eight columns omega no-border-top">
+          <% options = options_for_select(  Rails.application.config.spree.promotions.actions.map(&:name).map {|name| [ Spree.t("promotion_action_types.#{name.demodulize.underscore}.name"), name] } ) %>
+          <fieldset>
+            <legend align="center"><%= Spree.t(:promotion_actions) %></legend>
+            <% if @promotion.actions.any? %>
+              <div class="field">
+                <%= label_tag :action_type, Spree.t(:add_action_of_type)%>
+                <%= select_tag "action_type", options, :class => 'select2 fullwidth' %>
+              </div>
+          </fieldset>
+
+          <fieldset class="no-border-top">
+            <div id="actions" class="filter_list">
+              <%= render :partial => 'promotion_action',  :collection => @promotion.actions %>
+            <% else %>
+              <div class="no-objects-found">
+                <%= Spree.t(:no_actions_added) %>
+              </div>
+            <% end %>
+            </div>
+          </fieldset>
+      </div>
+    </div>
+  </div>
+<% end %>

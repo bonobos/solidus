@@ -4,6 +4,12 @@
   padding-bottom: 0;
 }
 
+#duplicate-promotions-overlay {
+  pointer-events: none;
+  background-color: light-grey;
+  opacity: 0.5;
+}
+
 #rules_container, #actions_container {
   position: relative;
 

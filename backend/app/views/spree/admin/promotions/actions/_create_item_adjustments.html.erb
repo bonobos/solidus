@@ -11,7 +11,6 @@
     <% end %>
   </div>
 
-  <% unless promotion_action.new_record? %>
     <div class="settings field omega four columns">
       <% promotion_action.calculator.preferences.keys.map do |key| %>
         <% field_name = "#{param_prefix}[calculator_attributes][preferred_#{key}]" %>
@@ -22,5 +21,4 @@
       <% end %>
       <%= hidden_field_tag "#{param_prefix}[calculator_attributes][id]", promotion_action.calculator.id %>
     </div>
-  <% end %>
 </div>
