@@ -50,15 +50,12 @@ module Spree
       def save_unique_permalink(permalink_value=self.to_param)
         self.with_lock do
           permalink_value ||= generate_permalink
-
-          field = self.class.permalink_field
-            # Do other links exist with this permalink?
-            other = self.class.where("#{self.class.table_name}.#{field} LIKE ?", "#{permalink_value}%")
-            if other.any?
-              save_unique_permalink
-            end
-          write_attribute(field, permalink_value)
+          # Do other links exist with this permalink?
+          other = self.class.where("#{self.class.table_name}.#{self.class.permalink_field} LIKE ?", "#{permalink_value}%")
+          write_attribute(self.class.permalink_field, permalink_value) unless other.any?
         end
+
+        save_unique_permalink if read_attribute(self.class.permalink_field).nil?
       end
     end
   end
