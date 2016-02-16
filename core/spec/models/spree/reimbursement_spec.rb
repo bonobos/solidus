@@ -137,7 +137,11 @@ describe Spree::Reimbursement, type: :model do
 
     context "when exchange is required" do
       let(:exchange_variant) { create(:on_demand_variant, product: return_item.inventory_unit.variant.product) }
-      before { return_item.exchange_variant = exchange_variant }
+
+      before {
+        return_item.exchange_variant = exchange_variant
+        create :shipping_method #need a shipping method that matches the address' zone and tax_zone does not
+       }
       it "generates an exchange shipment for the order for the exchange items" do
         expect { subject }.to change { order.reload.shipments.count }.by 1
         expect(order.shipments.last.inventory_units.first.variant).to eq exchange_variant
