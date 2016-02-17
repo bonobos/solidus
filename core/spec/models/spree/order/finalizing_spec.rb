@@ -18,7 +18,7 @@ describe Spree::Order, :type => :model do
 
     it "should sell inventory units" do
       order.shipments.each do |shipment|
-        expect(shipment).to receive(:ready!)
+        expect(shipment).to receive(:update!)
         expect(shipment).to receive(:finalize!)
       end
       order.finalize!
@@ -35,7 +35,7 @@ describe Spree::Order, :type => :model do
       Spree::Shipment.create(order: order)
       order.shipments.reload
 
-      allow(order).to receive_messages(paid?: true, complete?: true, approved?: true)
+      allow(order).to receive_messages(:paid? => true, :complete? => true)
       order.finalize!
       order.reload # reload so we're sure the changes are persisted
       expect(order.shipment_state).to eq('ready')
