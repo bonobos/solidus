@@ -190,6 +190,10 @@ module Spree
     #   @return [Boolean] Require a price on the master variant of a product (default: +true+)
     preference :require_master_price, :boolean, default: true
 
+    # @!attribute [rw] require_payment_to_ship
+    #   @return [Boolean] Allows shipments to be ready to ship regardless of the order being paid if false (default: +true+)
+    preference :require_payment_to_ship, :boolean, default: true # Allows shipments to be ready to ship regardless of the order being paid if false
+
     # @!attribute [rw] return_eligibility_number_of_days
     #   @return [Integer] default: 365
     preference :return_eligibility_number_of_days, :integer, default: 365

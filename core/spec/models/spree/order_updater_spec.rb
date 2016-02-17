@@ -235,6 +235,11 @@ module Spree
         before { create(:shipment, order: order) }
         let(:shipment){ order.shipments[0] }
 
+        it "updates each shipment" do
+          expect(shipment).to receive(:update!)
+          updater.update_shipments
+        end
+
         it "refreshes shipment rates" do
           expect(shipment).to receive(:refresh_rates)
           updater.update_shipments
