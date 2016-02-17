@@ -43,6 +43,7 @@ module Spree
         transition from: :pending, to: :shipped, if: :can_transition_from_pending_to_shipped?
         transition from: :pending, to: :ready, if: :can_transition_from_pending_to_ready?
       end
+      after_transition to: :ready, do: :after_ready
 
       event :pend do
         transition from: :ready, to: :pending
@@ -81,8 +82,7 @@ module Spree
     end
 
     def can_transition_from_pending_to_ready?
-      order.can_ship? && !inventory_units.any?(&:backordered?) &&
-        (order.paid? || !Spree::Config[:require_payment_to_ship])
+      order.can_ship? && !inventory_units.any?(&:backordered?)
     end
 
     def can_transition_from_canceled_to_ready?
@@ -199,24 +199,6 @@ module Spree
       self.save!
     end
 
-    # Determines the appropriate +state+ according to the following logic:
-    #
-    # canceled   if order is canceled
-    # pending    unless order is complete and +order.payment_state+ is +paid+
-    # shipped    if already shipped (ie. does not change the state)
-    # ready      all other cases
-    def determine_state(order)
-      return 'canceled' if order.canceled?
-      return 'pending' unless order.can_ship?
-      return 'pending' if inventory_units.any? &:backordered?
-      return 'shipped' if state == 'shipped'
-      if order.paid? || !Spree::Config[:require_payment_to_ship]
-        'ready'
-      else
-        'pending'
-      end
-    end
-
     def set_up_inventory(state, variant, order, line_item)
       self.inventory_units.create(
         state: state,
@@ -287,13 +269,6 @@ module Spree
           order.updater.update_shipment_total
           order.updater.update_payment_state
 
-          # Update shipment state only after order total is updated because it
-          # (via Order#paid?) affects the shipment state (YAY)
-          self.update_columns(
-            state: determine_state(order),
-            updated_at: Time.now
-          )
-
           # And then it's time to update shipment states and finally persist
           # order changes
           order.updater.update_shipment_state
@@ -302,19 +277,6 @@ module Spree
 
         true
       end
-    end
-
-    # Updates various aspects of the Shipment while bypassing any callbacks.  Note that this method takes an explicit reference to the
-    # Order object.  This is necessary because the association actually has a stale (and unsaved) copy of the Order and so it will not
-    # yield the correct results.
-    def update!(order)
-      old_state = state
-      new_state = determine_state(order)
-      update_columns(
-        state: new_state,
-        updated_at: Time.now,
-      )
-      after_ship if new_state == 'shipped' and old_state != 'shipped'
     end
 
     def transfer_to_location(variant, quantity, stock_location)
@@ -361,6 +323,11 @@ module Spree
 
       def after_ship
         order.shipping.ship_shipment(self, suppress_mailer: suppress_mailer)
+      end
+
+      def after_ready
+        order.updater.update_shipment_state
+        order.updater.persist_totals
       end
 
       def can_get_rates?

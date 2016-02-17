@@ -53,7 +53,6 @@ module Spree
     def update_shipments
       shipments.each do |shipment|
         next unless shipment.persisted?
-        shipment.update!(order)
         shipment.refresh_rates
         shipment.update_amounts
       end

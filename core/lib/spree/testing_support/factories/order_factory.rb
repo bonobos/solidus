@@ -60,9 +60,6 @@ FactoryGirl.define do
         end
 
         factory :order_ready_to_ship do
-          payment_state 'paid'
-          shipment_state 'ready'
-
           transient do
             payment_type :credit_card_payment
           end
@@ -71,9 +68,8 @@ FactoryGirl.define do
             create(evaluator.payment_type, amount: order.total, order: order, state: 'completed')
             order.shipments.each do |shipment|
               shipment.inventory_units.update_all state: 'on_hand'
-              shipment.update_column('state', 'ready')
+              shipment.ready!
             end
-            order.reload
           end
 
           factory :shipped_order do

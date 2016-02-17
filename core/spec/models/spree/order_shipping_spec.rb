@@ -8,7 +8,6 @@ describe Spree::OrderShipping do
   end
 
   shared_examples 'shipment shipping' do
-
     it "marks the inventory units as shipped" do
       expect { subject }.to change { order.inventory_units.reload.map(&:state) }.from(['on_hand']).to(['shipped'])
     end

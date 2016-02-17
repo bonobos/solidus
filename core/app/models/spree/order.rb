@@ -374,7 +374,9 @@ module Spree
       # update payment and shipment(s) states, and save
       updater.update_payment_state
       shipments.each do |shipment|
-        shipment.update!(self)
+        if approved? && shipment.pending?
+          shipment.ready!
+        end
         shipment.finalize!
       end
 
@@ -388,7 +390,10 @@ module Spree
     end
 
     def fulfill!
-      shipments.each { |shipment| shipment.update!(self) if shipment.persisted? }
+      # 'fulfill!' is only used in a callback for backordering which we do not use.
+      # calling 'ready' here will just maintain this method until we remove backordering
+      # completely.
+      shipments.each { |shipment| shipment.ready if shipment.persisted? }
       updater.update_shipment_state
       save!
     end

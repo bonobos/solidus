@@ -55,38 +55,6 @@ describe Spree::Shipment, :type => :model do
     expect(shipment).to be_backordered
   end
 
-  context '#determine_state' do
-    it 'returns canceled if order is canceled?' do
-      allow(order).to receive_messages canceled?: true
-      expect(shipment.determine_state(order)).to eq 'canceled'
-    end
-
-    it 'returns pending unless order.can_ship?' do
-      allow(order).to receive_messages can_ship?: false
-      expect(shipment.determine_state(order)).to eq 'pending'
-    end
-
-    it 'returns pending if backordered' do
-      allow(shipment).to receive_messages inventory_units: [mock_model(Spree::InventoryUnit, backordered?: true)]
-      expect(shipment.determine_state(order)).to eq 'pending'
-    end
-
-    it 'returns shipped when already shipped' do
-      allow(shipment).to receive_messages state: 'shipped'
-      expect(shipment.determine_state(order)).to eq 'shipped'
-    end
-
-    it 'returns pending when unpaid' do
-      allow(order).to receive_messages paid?: false
-      expect(shipment.determine_state(order)).to eq 'pending'
-    end
-
-    it 'returns ready when paid' do
-      allow(order).to receive_messages paid?: true
-      expect(shipment.determine_state(order)).to eq 'ready'
-    end
-  end
-
   context "display_amount" do
     it "retuns a Spree::Money" do
       shipment.cost = 21.22
@@ -230,101 +198,15 @@ describe Spree::Shipment, :type => :model do
     end
   end
 
-  context "#update!" do
-    shared_examples_for "immutable once shipped" do
-      it "should remain in shipped state once shipped" do
-        shipment.state = 'shipped'
-        expect(shipment).to receive(:update_columns).with(state: 'shipped', updated_at: kind_of(Time))
-        shipment.update!(order)
-      end
+  context "transition to shipping with adjustments" do
+      # Regression test for #4347 (https://github.com/spree/spree/pull/4347)
+    before do
+      shipment.adjustments << Spree::Adjustment.create(order: order, label: "Label", amount: 5)
     end
 
-    shared_examples_for "pending if backordered" do
-      it "should have a state of pending if backordered" do
-        allow(shipment).to receive_messages(inventory_units: [mock_model(Spree::InventoryUnit, backordered?: true)])
-        expect(shipment).to receive(:update_columns).with(state: 'pending', updated_at: kind_of(Time))
-        shipment.update!(order)
-      end
-    end
-
-    context "when order cannot ship" do
-      before { allow(order).to receive_messages can_ship?: false }
-      it "should result in a 'pending' state" do
-        expect(shipment).to receive(:update_columns).with(state: 'pending', updated_at: kind_of(Time))
-        shipment.update!(order)
-      end
-    end
-
-    context "when order is paid" do
-      before { allow(order).to receive_messages paid?: true }
-      it "should result in a 'ready' state" do
-        expect(shipment).to receive(:update_columns).with(state: 'ready', updated_at: kind_of(Time))
-        shipment.update!(order)
-      end
-      it_should_behave_like 'immutable once shipped'
-      it_should_behave_like 'pending if backordered'
-    end
-
-    context "when payment is not required" do
-      before do
-        @original_require_payment = Spree::Config[:require_payment_to_ship]
-        Spree::Config[:require_payment_to_ship] = false
-      end
-
-      after do
-        Spree::Config[:require_payment_to_ship] = @original_require_payment
-      end
-
-      it "should result in a 'ready' state" do
-        expect(shipment).to receive(:update_columns).with(state: 'ready', updated_at: kind_of(Time))
-        shipment.update!(order)
-      end
-      it_should_behave_like 'immutable once shipped'
-      it_should_behave_like 'pending if backordered'
-    end
-
-    context "when order has balance due" do
-      before { allow(order).to receive_messages paid?: false }
-      it "should result in a 'pending' state" do
-        shipment.state = 'ready'
-        expect(shipment).to receive(:update_columns).with(state: 'pending', updated_at: kind_of(Time))
-        shipment.update!(order)
-      end
-      it_should_behave_like 'immutable once shipped'
-      it_should_behave_like 'pending if backordered'
-    end
-
-    context "when order has a credit owed" do
-      before { allow(order).to receive_messages payment_state: 'credit_owed', paid?: true }
-      it "should result in a 'ready' state" do
-        shipment.state = 'pending'
-        expect(shipment).to receive(:update_columns).with(state: 'ready', updated_at: kind_of(Time))
-        shipment.update!(order)
-      end
-      it_should_behave_like 'immutable once shipped'
-      it_should_behave_like 'pending if backordered'
-    end
-
-    context "when shipment state changes to shipped" do
-      it "should call after_ship" do
-        shipment.state = 'pending'
-        expect(shipment).to receive :after_ship
-        allow(shipment).to receive_messages determine_state: 'shipped'
-        expect(shipment).to receive(:update_columns).with(state: 'shipped', updated_at: kind_of(Time))
-        shipment.update!(order)
-      end
-
-      # Regression test for #4347
-      context "with adjustments" do
-        before do
-          shipment.adjustments << Spree::Adjustment.create(order: order, label: "Label", amount: 5)
-        end
-
-        it "transitions to shipped" do
-          shipment.update_column(:state, "ready")
-          expect { shipment.ship! }.not_to raise_error
-        end
-      end
+    it "transitions to shipped" do
+      shipment.update_column(:state, "ready")
+      expect { shipment.ship! }.not_to raise_error
     end
   end
 
@@ -417,7 +299,7 @@ describe Spree::Shipment, :type => :model do
       before { allow(order).to receive_messages(paid?: false) }
       it "should result in a 'ready' state" do
         shipment.resume!
-        expect(shipment.state).to eq 'pending'
+        expect(shipment.state).to eq 'ready'
       end
     end
 
@@ -489,14 +371,6 @@ describe Spree::Shipment, :type => :model do
           shipment.ship!
         end
       end
-    end
-  end
-
-  context "#ready" do
-    # Regression test for #2040
-    it "cannot ready a shipment for an order if the order is unpaid" do
-      expect(order).to receive_messages(paid?: false)
-      expect(shipment).not_to be_can_ready
     end
   end
 
