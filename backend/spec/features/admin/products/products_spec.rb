@@ -349,7 +349,7 @@ describe "Products", :type => :feature do
         check "Show Deleted"
         click_icon :search
         click_link product.name
-        expect(page).to have_field('Master Price', with: product.price.to_f)
+        expect(page).to have_field('SKU', with: product.sku)
       end
     end
   end
