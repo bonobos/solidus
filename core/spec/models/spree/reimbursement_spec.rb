@@ -49,9 +49,10 @@ describe Spree::Reimbursement, type: :model do
   describe "#perform!" do
     let!(:adjustments)            { [] } # placeholder to ensure it gets run prior the "before" at this level
 
+    let!(:usa)                    { create(:country) } # need to create USA before referencing the global zone or it won't have any zone members
+    let!(:zone)                   { Spree::Zone.global.tap { |z| z.update!(default_tax: true) } }
     let!(:tax_rate)               { nil }
-    let!(:tax_zone)               { create :zone, default_tax: true }
-    let(:shipping_method)         { create :shipping_method, zones: [tax_zone] }
+    let(:shipping_method)         { create :shipping_method } # gets put in the global zone
     let(:variant)                 { create :variant }
     let(:order)                   { create(:order_with_line_items, state: 'payment', line_items_attributes: [{variant: variant, price: line_items_price}], shipment_cost: 0, shipping_method: shipping_method) }
     let(:line_items_price)        { BigDecimal.new(10) }
@@ -98,7 +99,7 @@ describe Spree::Reimbursement, type: :model do
     end
 
     context 'with additional tax' do
-      let!(:tax_rate) { create(:tax_rate, name: "Sales Tax", amount: 0.10, included_in_price: false, zone: tax_zone) }
+      let!(:tax_rate) { create(:tax_rate, name: "Sales Tax", amount: 0.10, included_in_price: false, zone: Spree::Zone.global) }
 
       it 'saves the additional tax and refunds the total' do
         expect {
@@ -113,7 +114,7 @@ describe Spree::Reimbursement, type: :model do
     end
 
     context 'with included tax' do
-      let!(:tax_rate) { create(:tax_rate, name: "VAT Tax", amount: 0.1, included_in_price: true, zone: tax_zone) }
+      let!(:tax_rate) { create(:tax_rate, name: "VAT Tax", amount: 0.1, included_in_price: true, zone: Spree::Zone.global) }
 
       it 'saves the included tax and refunds the total' do
         expect {
@@ -137,6 +138,7 @@ describe Spree::Reimbursement, type: :model do
 
     context "when exchange is required" do
       let(:exchange_variant) { create(:on_demand_variant, product: return_item.inventory_unit.variant.product) }
+
       before { return_item.exchange_variant = exchange_variant }
       it "generates an exchange shipment for the order for the exchange items" do
         expect { subject }.to change { order.reload.shipments.count }.by 1
